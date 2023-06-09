@@ -29,9 +29,31 @@ async function run() {
         await client.connect();
 
         const classCollection = client.db("WorldSpeak").collection("classes");
+        const userCollection = client.db("WorldSpeak").collection("users");
 
-        app.get('/classes', async(req, res) => {
+        app.get('/classes', async (req, res) => {
             const result = await classCollection.find().toArray();
+            res.send(result)
+        })
+
+        // my class for instructor
+        app.get('/classes', async (req, res) => {
+            const email = req.query.email;
+            const query = {instructor_email: email};
+            const result = await classCollection.find(query).toArray();
+            res.send(result);
+        })
+
+        app.post('/classes', async (req, res) => {
+            const body = req.body;
+            const result = await classCollection.insertOne(body);
+            res.send(result)
+        })
+
+        // users
+        app.post('/users', async (req, res) => {
+            const user = req.body;
+            const result = await userCollection.insertOne(user);
             res.send(result)
         })
 
