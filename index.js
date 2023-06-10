@@ -37,7 +37,7 @@ async function run() {
         })
 
         // my class for instructor
-        app.get('/classes', async (req, res) => {
+        app.get('/my-class', async (req, res) => {
             const email = req.query.email;
             const query = {instructor_email: email};
             const result = await classCollection.find(query).toArray();
@@ -51,6 +51,11 @@ async function run() {
         })
 
         // users
+        app.get('/users', async(req, res) => {
+            const result = await userCollection.find().toArray();
+            res.send(result);
+        })
+
         app.post('/users', async (req, res) => {
             const user = req.body;
             const result = await userCollection.insertOne(user);
