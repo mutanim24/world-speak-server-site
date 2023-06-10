@@ -1,16 +1,29 @@
 const express = require("express")
 const app = express();
 const cors = require("cors");
-// const jwt = require('jsonwebtoken');
+const jwt = require('jsonwebtoken');
 require('dotenv').config();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000;
 
 // middleware
 app.use(cors())
 app.use(express.json())
 
-
+const verifyJwt = (req, res, next) => {
+    const authorization = req.headers.authorization;
+    if(!authorization){
+        return res.status(401).send({error: true, message: "unauthorize access"})
+    }
+    const token = authorization.split(" ")[1];
+    jwt.verify(token, process.env.JWT_ACCESS_TOKEN, (error, decoded) => {
+        if(error){
+            return res.status(401).send({error: true, message: "unauthorize access"})
+        }
+        req.decoded = decoded;
+        next();
+    })
+}
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.z12trsh.mongodb.net/?retryWrites=true&w=majority`;
 
@@ -31,15 +44,22 @@ async function run() {
         const classCollection = client.db("WorldSpeak").collection("classes");
         const userCollection = client.db("WorldSpeak").collection("users");
 
+        // jwt
+        app.post('/jwt', async(req, res) => {
+            const email = req.body;
+            const token = jwt.sign(email, process.env.JWT_ACCESS_TOKEN, {expiresIn: '1h'})
+            res.send({token})
+        })
+
         app.get('/classes', async (req, res) => {
             const result = await classCollection.find().toArray();
             res.send(result)
         })
 
         // my class for instructor
-        app.get('/my-class', async (req, res) => {
+        app.get('/my-class', verifyJwt, async (req, res) => {
             const email = req.query.email;
-            const query = {instructor_email: email};
+            const query = { instructor_email: email };
             const result = await classCollection.find(query).toArray();
             res.send(result);
         })
@@ -50,8 +70,22 @@ async function run() {
             res.send(result)
         })
 
+        app.put('update-class/:id', async (req, res) => {
+            const updatedBody = req.body;
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id)};
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    admin: 'admin'
+                },
+            };
+            const result = await classCollection.updateOne(filter, updateDoc, options);
+            res.send(result)
+        })
+
         // users
-        app.get('/users', async(req, res) => {
+        app.get('/users', async (req, res) => {
             const result = await userCollection.find().toArray();
             res.send(result);
         })
