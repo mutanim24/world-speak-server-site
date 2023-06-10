@@ -59,9 +59,23 @@ async function run() {
         })
 
         // selected class
+        app.get('/select-class', async(req, res) => {
+            const email = req.query.email;
+            const query = {userEmail: email};
+            const result = await selectedClassCollection.find(query).toArray();
+            res.send(result)
+        })
+
         app.post('/select-class', async(req, res) => {
             const body = req.body;
             const result = await selectedClassCollection.insertOne(body);
+            res.send(result);
+        })
+
+        app.delete('/select-class', async(req, res) => {
+            const id = req.params.id;
+            const query = {_id: new ObjectId(id)};
+            const result = await selectedClassCollection.deleteOne(query);
             res.send(result);
         })
 
