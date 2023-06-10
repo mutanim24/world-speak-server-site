@@ -12,13 +12,13 @@ app.use(express.json())
 
 const verifyJwt = (req, res, next) => {
     const authorization = req.headers.authorization;
-    if(!authorization){
-        return res.status(401).send({error: true, message: "unauthorize access"})
+    if (!authorization) {
+        return res.status(401).send({ error: true, message: "unauthorize access" })
     }
     const token = authorization.split(" ")[1];
     jwt.verify(token, process.env.JWT_ACCESS_TOKEN, (error, decoded) => {
-        if(error){
-            return res.status(401).send({error: true, message: "unauthorize access"})
+        if (error) {
+            return res.status(401).send({ error: true, message: "unauthorize access" })
         }
         req.decoded = decoded;
         next();
@@ -45,12 +45,13 @@ async function run() {
         const userCollection = client.db("WorldSpeak").collection("users");
 
         // jwt
-        app.post('/jwt', async(req, res) => {
+        app.post('/jwt', async (req, res) => {
             const email = req.body;
-            const token = jwt.sign(email, process.env.JWT_ACCESS_TOKEN, {expiresIn: '1h'})
-            res.send({token})
+            const token = jwt.sign(email, process.env.JWT_ACCESS_TOKEN, { expiresIn: '1h' })
+            res.send({ token })
         })
 
+        // class
         app.get('/classes', async (req, res) => {
             const result = await classCollection.find().toArray();
             res.send(result)
@@ -64,7 +65,7 @@ async function run() {
             res.send(result);
         })
 
-        app.post('/classes', async (req, res) => {
+        app.post('/classes', verifyJwt, async (req, res) => {
             const body = req.body;
             const result = await classCollection.insertOne(body);
             res.send(result)
@@ -73,7 +74,7 @@ async function run() {
         app.put('update-class/:id', async (req, res) => {
             const updatedBody = req.body;
             const id = req.params.id;
-            const filter = { _id: new ObjectId(id)};
+            const filter = { _id: new ObjectId(id) };
             const options = { upsert: true };
             const updateDoc = {
                 $set: {
@@ -92,6 +93,11 @@ async function run() {
 
         app.post('/users', async (req, res) => {
             const user = req.body;
+            const query = {email: user.email}
+            const existingUser = await userCollection.findOne(query);
+            if (existingUser) {
+                return res.send({ message: "user already exist" })
+            }
             const result = await userCollection.insertOne(user);
             res.send(result)
         })
