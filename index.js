@@ -42,6 +42,7 @@ async function run() {
         await client.connect();
 
         const classCollection = client.db("WorldSpeak").collection("classes");
+        const selectedClassCollection = client.db("WorldSpeak").collection("selectedClasses");
         const userCollection = client.db("WorldSpeak").collection("users");
 
         // jwt
@@ -55,6 +56,13 @@ async function run() {
         app.get('/classes', async (req, res) => {
             const result = await classCollection.find().toArray();
             res.send(result)
+        })
+
+        // selected class
+        app.post('/select-class', async(req, res) => {
+            const body = req.body;
+            const result = await selectedClassCollection.insertOne(body);
+            res.send(result);
         })
 
         // my class for instructor
