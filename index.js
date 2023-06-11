@@ -123,6 +123,12 @@ async function run() {
             res.send(result);
         })
 
+        // enrolled class
+        app.get('/enrolledclass', async(req, res) => {
+            const result = await paymentCollection.find().toArray();
+            res.send(result);
+        })
+
         // my class for instructor
         app.get('/my-class', verifyJwt, async (req, res) => {
             const email = req.query.email;
@@ -168,6 +174,7 @@ async function run() {
             res.send(result)
         })
 
+        // admin or not
         app.get("/users/admin/:email", verifyJwt, async (req, res) => {
             const email = req.params.email;
 
@@ -192,6 +199,46 @@ async function run() {
                 },
             };
             const result = await userCollection.updateOne(filter, updateDoc);
+            res.send(result);
+        });
+
+        // instructor or not
+        app.get("/users/instructor/:email", verifyJwt, async (req, res) => {
+            const email = req.params.email;
+            if (req.decoded.email !== email) {
+                res.send({ instructor: false })
+            }
+
+            const query = { email: email };
+            const user = await userCollection.findOne(query);
+            const result = { instructor: user?.role === "instructor" }
+            res.send(result)
+        })
+
+
+        app.patch("/users/instructor/:id", async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
+            const updateDoc = {
+                $set: {
+                    role: "instructor",
+                },
+            };
+            const result = await userCollection.updateOne(filter, updateDoc);
+            res.send(result);
+        });
+
+        // feedback handle
+        app.patch("/insertFeedback/:id", async (req, res) => {
+            const id = req.params.id;
+            const feedback = req.body;
+            const filter = { _id: new ObjectId(id) };
+            const updateDoc = {
+                $set: {
+                    feedback: feedback,
+                },
+            };
+            const result = await classCollection.updateOne(filter, updateDoc);
             res.send(result);
         });
 
