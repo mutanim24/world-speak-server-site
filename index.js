@@ -41,7 +41,7 @@ const client = new MongoClient(uri, {
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
-        await client.connect();
+        // await client.connect();
 
         const classCollection = client.db("WorldSpeak").collection("classes");
         const selectedClassCollection = client.db("WorldSpeak").collection("selectedClasses");
@@ -158,7 +158,7 @@ async function run() {
         // })
 
         // users
-        app.get('/users',  async (req, res) => { 
+        app.get('/users', verifyJwt,  async (req, res) => { 
             const result = await userCollection.find().toArray();
             res.send(result);
         })
@@ -177,10 +177,6 @@ async function run() {
         // admin or not
         app.get("/users/admin/:email", verifyJwt, async (req, res) => {
             const email = req.params.email;
-
-            // if (req.decoded.email !== email) {
-            //     res.send({ admin: false })
-            // }
 
             const query = { email: email };
             const user = await userCollection.findOne(query);
