@@ -67,7 +67,7 @@ async function run() {
         }
 
         // class
-        app.get('/allclasses', async (req, res) => {
+        app.get('/allclasses', verifyJwt, verifyAdmin, async (req, res) => {
             const result = await classCollection.find().toArray();
             res.send(result);
         });
@@ -143,28 +143,28 @@ async function run() {
             res.send(result)
         })
 
-        app.put('/my-class/update-class/:id', async (req, res) => {
-            const updatedBody = req.body;
-            const id = req.params.id;
-            const filter = { _id: new ObjectId(id) };
-            const options = { upsert: true };
-            const updateDoc = {
-                $set: {
-                    admin: 'admin'
-                },
-            };
-            const result = await classCollection.updateOne(filter, updateDoc, options);
-            res.send(result)
-        })
+        // app.put('/my-class/update-class/:id', async (req, res) => {
+        //     const updatedBody = req.body;
+        //     const id = req.params.id;
+        //     const filter = { _id: new ObjectId(id) };
+        //     const options = { upsert: true };
+        //     const updateDoc = {
+        //         $set: {
+        //             admin: 'admin'
+        //         },
+        //     };
+        //     const result = await classCollection.updateOne(filter, updateDoc, options);
+        //     res.send(result)
+        // })
 
         // users
-        app.get('/users', async (req, res) => {
+        app.get('/users',  async (req, res) => { 
             const result = await userCollection.find().toArray();
             res.send(result);
         })
 
         app.post('/users', async (req, res) => {
-            const user = req.body;
+            const user = req.body;            
             const query = { email: user.email }
             const existingUser = await userCollection.findOne(query);
             if (existingUser) {
@@ -205,10 +205,7 @@ async function run() {
         // instructor or not
         app.get("/users/instructor/:email", verifyJwt, async (req, res) => {
             const email = req.params.email;
-            if (req.decoded.email !== email) {
-                res.send({ instructor: false })
-            }
-
+            
             const query = { email: email };
             const user = await userCollection.findOne(query);
             const result = { instructor: user?.role === "instructor" }
